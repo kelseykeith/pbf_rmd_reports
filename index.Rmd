@@ -1,0 +1,73 @@
+---
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(magrittr)
+library(tidyverse)
+library(vroom)
+library(conflicted)
+
+library(lubridate)
+library(viridis)
+
+filter <- dplyr::filter
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+<br>
+
+## Philly Bail Fund Bail Report **ALPHA** Site
+
+<br>
+
+Testing
+
+```{r, include = FALSE}
+vroom('../pbf-analysis/Data/0c_distinct_dockets.csv') -> docket_data
+```
+
+Test plot 1
+
+```{r, echo = FALSE}
+docket_data %>% 
+  mutate(bail_bins = factor(case_when(bail_amount == 0 ~ 'No Bail',
+                               bail_amount > 0 & bail_amount < 10000 ~ 
+                                 '$1-$10k',
+                               bail_amount >= 10000 & bail_amount < 25000 ~ 
+                                 '$10k-$25k',
+                               bail_amount >= 25000 & bail_amount < 100000 ~ 
+                                 '$25k-$100k',
+                               bail_amount >= 100000 ~ '$100k+'),
+                            levels = c('$100k+', '$25k-$100k', '$10k-$25k',
+                                       '$1-$10k', 'No Bail')),
+         month = floor_date(filing_date, unit = 'month')) %>%
+
+ggplot(aes(x = filing_date, fill = bail_bins)) +
+  geom_density(alpha = 0.25) +
+  scale_fill_viridis_d() +
+  theme_classic()
+```
+
+Test plot 2
+
+```{r, echo = F}
+docket_data %>% 
+  replace_na(list(bail_status = 'Unknown')) %>%
+  count(bail_status) %>%
+  arrange(n) %>%
+  mutate(total_dockets = sum(n),
+         bail_status = factor(bail_status, bail_status),
+         percent = paste0(round(((n / total_dockets) * 100), 0), '%')) %>%
+
+ggplot(aes(x = bail_status, y = n, fill = bail_status)) +
+  geom_col() +
+  geom_text(aes(label = percent), vjust = -1) +
+  scale_fill_viridis_d(option = 'cividis') +
+  labs(x = 'Bail Type', y = 'Number of Individuals\nFeb - Jun 2020') +
+  coord_cartesian(ylim = c(0, 3000)) +
+  theme_classic() +
+  theme(legend.position = 'none')
+```
+

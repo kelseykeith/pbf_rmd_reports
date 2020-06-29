@@ -1,0 +1,7 @@
+
+name: "my-website"
+navbar:
+  title: "Philly Bail Fund Bail Report"
+  left:
+    - text: "Home"
+      href: index.html
